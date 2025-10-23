@@ -17,46 +17,44 @@ const Chat = () => {
     }
 
     const handleConnect = () => {
-      console.log("Emitting JOIN for user:", user._id);
       socket.emit(SocketEvent.JOIN, user._id);
     };
 
-    if (socket.connected) {
-      handleConnect();
-    } else {
-      socket.once("connect", handleConnect);
-    }
+    if (socket.connected) handleConnect();
+    else socket.once("connect", handleConnect);
 
     return () => {
-      if (socket.connected) {
-        console.log("Emitting LEAVE for user:", user._id);
-        socket.emit(SocketEvent.LEAVE, user._id);
-      }
+      if (socket.connected) socket.emit(SocketEvent.LEAVE, user._id);
     };
   }, [user, navigate]);
 
   if (!user) return null;
 
   return (
-    <div className="max-w-7xl mx-auto bg-gray-100 min-h-screen flex flex-col items-center justify-center">
-      <div className="flex items-center justify-evenly mx-auto fixed top-0 left-0 right-0 bg-white p-4 shadow">
+    <div className="flex flex-col h-screen bg-gray-100">
+      {/* Header */}
+      <header className="flex justify-between items-center bg-white p-4 shadow-md">
         <div>
-          <h2 className="text-2xl font-bold">User: {user.email}</h2>
-          <h2 className="text-2xl font-bold">Role: {user.role}</h2>
+          <h2 className="text-xl font-bold">{user.email}</h2>
+          <p className="text-sm text-gray-500">{user.role}</p>
         </div>
-        <div>
-          <Button onClick={resetUser}>Logout</Button>
-        </div>
-      </div>
+        <Button variant="destructive" onClick={resetUser}>
+          Logout
+        </Button>
+      </header>
 
-      <div className="flex">
-        <div className="pt-28 w-full">
+      {/* Main Chat Layout */}
+      <main className="flex flex-1 overflow-hidden">
+        {/* User List */}
+        <aside className="w-64 bg-white border-r border-gray-200 overflow-y-auto p-4">
           <AllUsers />
-        </div>
-        <div className="">
+        </aside>
+
+        {/* Chat Window */}
+        <section className="flex-1 flex flex-col p-4 bg-gray-50">
           <ChatWindow />
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   );
 };

@@ -10,7 +10,7 @@ export type User = {
 
 export type Message = {
   _id: string;
-  senderId: string;
+  sender: string;
   text: string;
-  receiverId: string;
+  receiver: string;
 };

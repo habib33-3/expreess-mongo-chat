@@ -1,4 +1,4 @@
-import { Conversation } from "../model/conversation";
+import { Conversation } from "../model/conversation.model";
 import { getObjectId } from "../lib/util";
 import { Types } from "mongoose";
 
@@ -25,3 +25,5 @@ export const findOrCreateConversation = async (userId1: string, userId2: string)
     throw err;
   }
 };
+
+
