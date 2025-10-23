@@ -3,8 +3,9 @@ import { initSocket } from "./lib/socket";
 import { registerSocketHandlers } from "./lib/socket-loader";
 import http from "http";
 import cors from "cors";
-import "dotenv/config"
+import "dotenv/config";
 import { connectDB } from "./lib/mongoose";
+import { userRouter } from "./routes/user.routes";
 
 const app = express();
 
@@ -27,10 +28,12 @@ app.use(
   })
 );
 
+app.use("/user", userRouter);
+
 (async () => {
   try {
     await connectDB();
-    app.listen(port, () => console.log(`🚀 Server running on  ${port}`));
+    server.listen(port, () => console.log(`🚀 Server running on  ${port}`));
   } catch (err) {
     console.error("❌ Server startup failed:", (err as Error).message);
     process.exit(1);
