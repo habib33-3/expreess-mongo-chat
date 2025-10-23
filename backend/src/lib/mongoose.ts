@@ -2,7 +2,7 @@
 import mongoose from "mongoose";
 
 export const connectDB = async (): Promise<void> => {
-  const mongoURI = process.env.MONGO_URL;
+  const mongoURI = `${process.env.MONGO_URL}/chat-app`;
 
   if (!mongoURI) {
     console.error("❌ MONGO_URL is missing from environment variables.");

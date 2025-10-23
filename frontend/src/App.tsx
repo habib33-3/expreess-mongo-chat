@@ -1,13 +1,21 @@
 import axios from "axios";
 import { useState } from "react";
-import { dbUrl } from "./constants";
+import { dbUrl, roles } from "./constants";
 import { useUserStore } from "./store/user";
 import { Input } from "./components/ui/input";
 import { Button } from "./components/ui/button";
 import { useNavigate } from "react-router";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./components/ui/select";
 
 const App = () => {
   const [email, setEmail] = useState("");
+  const [role, setRole] = useState(""); 
   const navigate = useNavigate();
 
   const { setUser, user } = useUserStore();
@@ -17,10 +25,13 @@ const App = () => {
   }
 
   const handleSubmit = async () => {
-    const res = await axios.post(`${dbUrl}/user/login`, { email });
+    if (!role) {
+      alert("Please select a role!");
+      return;
+    }
 
+    const res = await axios.post(`${dbUrl}/user/login`, { email, role });
     console.log(res);
-
     setUser(res.data.result);
   };
 
@@ -31,10 +42,32 @@ const App = () => {
           type="text"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="p-2 "
+          className="p-2"
         />
 
-        <Button onClick={handleSubmit} className="px-2 py-4 mt-2">
+        <Select
+          value={role}
+          onValueChange={setRole}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Role" />
+          </SelectTrigger>
+          <SelectContent>
+            {roles.map((role) => (
+              <SelectItem
+                key={role}
+                value={role}
+              >
+                {role}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Button
+          onClick={handleSubmit}
+          className="px-2 py-4 mt-2"
+        >
           Submit
         </Button>
       </div>

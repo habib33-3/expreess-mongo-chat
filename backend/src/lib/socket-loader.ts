@@ -1,6 +1,7 @@
 import { getIO } from "./socket.ts";
+import { multiUserChatFeature } from "./socket/chat.ts";
 
-// const features = [privateChatFeature, ]; // add more features
+const features = [multiUserChatFeature, ]; // add more features
 
 export const registerSocketHandlers = () => {
   const io = getIO();
@@ -9,7 +10,7 @@ export const registerSocketHandlers = () => {
     console.log(`🟢 User connected: ${socket.id}`);
 
     // Attach all modular features
-    // features.forEach((feature) => feature.register(io, socket));
+    features.forEach((feature) => feature.register(io, socket));
 
     socket.on("disconnect", () => {
       console.log(`🔴 User disconnected: ${socket.id}`);
