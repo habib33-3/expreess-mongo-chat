@@ -1,0 +1,50 @@
+# Node dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build outputs
+dist/
+build/
+.out/
+.next/
+coverage/
+.tmp/
+temp/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE / Editor settings
+.vscode/
+.idea/
+*.swp
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional lockfiles (uncomment one if using a specific package manager)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Optional: ignore Prisma or Mongoose generated folders
+prisma/migrations/
+
+# Optional: ignore uploads if stored locally
+uploads/
