@@ -40,7 +40,7 @@ const ChatMessages = () => {
   console.log(messages);
 
   return (
-    <div className="flex flex-col gap-2 overflow-y-auto max-h-[400px] p-2">
+    <div className="flex flex-col gap-2 overflow-y-auto p-2">
       {messages.map((msg) => (
         <MessageBox
           message={msg}
