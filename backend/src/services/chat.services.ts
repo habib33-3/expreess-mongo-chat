@@ -33,7 +33,9 @@ export const sendMessageServiceLayer = async (
   io: Server,
   senderId: string,
   receiverId: string,
-  text: string
+  text: string,
+  mediaUrl: string,
+  mediaType: string
 ) => {
   if (!text) return null;
 
@@ -45,6 +47,7 @@ export const sendMessageServiceLayer = async (
     receiver: getObjectId(receiverId),
     text,
     conversation: getObjectId(conversation._id),
+    ...(mediaUrl && { mediaUrl, mediaType }),
   });
 
   const roomId = conversation._id!.toString();

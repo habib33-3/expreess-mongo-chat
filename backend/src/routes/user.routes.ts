@@ -6,6 +6,6 @@ const router = Router();
 
 router.post("/login", userLoginHandler);
 
-router.get("/all/", getAllUsersHandler);
+router.get("/all", getAllUsersHandler);
 
 export const userRouter = router;

@@ -13,4 +13,6 @@ export type Message = {
   sender: string;
   text: string;
   receiver: string;
+  mediaUrl?: string;
+  mediaType?: string;
 };

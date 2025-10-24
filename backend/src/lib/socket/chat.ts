@@ -10,6 +10,7 @@ import {
 
 export const multiUserChatFeature = {
   register: (io: Server, socket: Socket) => {
+    // todo: notify and show current users about new user joining
     // --- User joins ---
     socket.on(SocketEvent.JOIN, async (userId: string) => {
       await userJoinService(userId);
@@ -33,12 +34,14 @@ export const multiUserChatFeature = {
     // --- Send message ---
     socket.on(
       SocketEvent.SEND_MESSAGE,
-      async ({ senderId, receiverId, text }) => {
+      async ({ senderId, receiverId, text, mediaUrl, mediaType }) => {
         const result = await sendMessageServiceLayer(
           io,
           senderId,
           receiverId,
-          text
+          text,
+          mediaUrl,
+          mediaType
         );
         if (!result) return;
 

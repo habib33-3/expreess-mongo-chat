@@ -6,6 +6,8 @@ import cors from "cors";
 import "dotenv/config";
 import { connectDB } from "./lib/mongoose";
 import { userRouter } from "./routes/user.routes";
+import { uploadRouter } from "./routes/upload.routes";
+import path from "path";
 
 const app = express();
 
@@ -16,6 +18,7 @@ const server = http.createServer(app);
 initSocket(server);
 registerSocketHandlers();
 
+app.use("../uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use(express.json());
 app.use(
   express.urlencoded({
@@ -29,6 +32,7 @@ app.use(
 );
 
 app.use("/user", userRouter);
+app.use("/upload", uploadRouter);
 
 (async () => {
   try {
