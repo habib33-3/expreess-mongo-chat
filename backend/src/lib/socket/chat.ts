@@ -33,12 +33,15 @@ export const multiUserChatFeature = {
     // --- Send message ---
     socket.on(
       SocketEvent.SEND_MESSAGE,
-      async ({ senderId, receiverId, text }) => {
+      async ({ senderId, receiverId, text, fileName, fileType, fileUrl }) => {
         const result = await sendMessageServiceLayer(
           io,
           senderId,
           receiverId,
-          text
+          text,
+          fileName,
+          fileType,
+          fileUrl
         );
         if (!result) return;
 

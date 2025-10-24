@@ -33,9 +33,13 @@ export const sendMessageServiceLayer = async (
   io: Server,
   senderId: string,
   receiverId: string,
-  text: string
+  text: string,
+  fileName: string,
+  fileType: string,
+  fileUrl: string
 ) => {
-  if (!text) return null;
+ if (!text && !fileUrl) return null;
+
 
   const conversation = await findOrCreateConversation(senderId, receiverId);
   if (!conversation) return null;
@@ -45,6 +49,9 @@ export const sendMessageServiceLayer = async (
     receiver: getObjectId(receiverId),
     text,
     conversation: getObjectId(conversation._id),
+    fileName,
+    fileType,
+    fileUrl,
   });
 
   const roomId = conversation._id!.toString();

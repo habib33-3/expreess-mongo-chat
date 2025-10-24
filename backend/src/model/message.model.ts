@@ -5,9 +5,10 @@ export interface IMessage extends Document {
   sender: Types.ObjectId;
   receiver: Types.ObjectId;
   text?: string;
-  mediaUrl?: string;
-  mediaType?: string;
+  fileUrl?: string;
+  fileType?: string;
   createdAt: Date;
+  fileName: string; 
 }
 
 const MessageSchema = new Schema<IMessage>({
@@ -19,8 +20,9 @@ const MessageSchema = new Schema<IMessage>({
   sender: { type: Schema.Types.ObjectId, ref: "User", required: true },
   receiver: { type: Schema.Types.ObjectId, ref: "User", required: true },
   text: String,
-  mediaUrl: String,
-  mediaType: String,
+  fileUrl: String,
+  fileName: String,
+  fileType: String,
   createdAt: { type: Date, default: Date.now },
 });
 
