@@ -20,24 +20,31 @@ const AllUsers = () => {
       .catch(console.error);
   }, [user?.email]);
 
-  // Online updates
+  // Listen for online users
   useEffect(() => {
-    if (!user?._id) return;
-    socket.emit(SocketEvent.JOIN, user._id);
+    const handleOnlineUsers = (onlineUsers: User[]) => {
+      setUsers((prev) => {
+        const updated = prev.map((u) => ({
+          ...u,
+          isOnline: onlineUsers.some((o) => o._id === u._id),
+        }));
 
-    const handleOnlineUsers = (onlineIds: string[]) => {
-      setUsers((prev) =>
-        prev.map((u) => ({ ...u, isOnline: onlineIds.includes(u._id) }))
-      );
+        onlineUsers.forEach((u) => {
+          if (!updated.find((x) => x._id === u._id)) {
+            updated.push(u);
+          }
+        });
+
+        return updated;
+      });
     };
 
     socket.on(SocketEvent.ONLINE_USERS, handleOnlineUsers);
 
     return () => {
-      socket.emit(SocketEvent.LEAVE, user._id);
       socket.off(SocketEvent.ONLINE_USERS, handleOnlineUsers);
     };
-  }, [user?._id]);
+  }, [users.length]);
 
   return (
     <div className="flex flex-col gap-2">
@@ -57,7 +64,7 @@ const AllUsers = () => {
                   u.isOnline ? "text-green-500" : "text-gray-400"
                 }`}
               >
-                ●
+                ● {u.isOnline ? "Online" : "Offline"}
               </span>
             </button>
           </li>
