@@ -1,47 +1,37 @@
-import { Roles, User } from "../model/user.model";
+import { User, Roles } from "../model/user.model";
 
+// Login or register a user
 export const userLoginService = async (email: string, role: Roles) => {
-  const user = await findUserByEmail(email);
-
+  let user = await User.findOne({ email });
   const generatedName = email.split("@")[0];
 
   if (!user) {
-    return await User.create({
+    const newUser = await User.create({
       email,
       role,
       name: generatedName,
+      isOnline: true, // mark online immediately
     });
+    return { user: newUser, isNew: true };
   }
 
-  return user;
+  // Mark existing user online
+  await User.findByIdAndUpdate(user._id, { isOnline: true });
+  user = await User.findById(user._id);
+  return { user, isNew: false };
 };
 
-export const findUserByEmail = async (email: string) => {
-  return await User.findOne({
-    email,
-  });
-};
-
-// // assuming only one seller
-// export const findSeller = async () => {
-//   return await User.findOne({
-//     role: "seller",
-//   });
-// };
-
+// Get all users except current user
 export const getAllUsersService = async (email: string) => {
-  return await User.find({
-    email: { $ne: email },
-  });
+  return await User.find({ email: { $ne: email } });
 };
 
-export const setUserOnline = async (userId: string) => {
-  return User.findByIdAndUpdate(userId, { isOnline: true });
-};
-
+// Set user offline
 export const setUserOffline = async (userId: string) => {
-  return User.findByIdAndUpdate(userId, {
-    isOnline: false,
-    lastSeen: new Date(),
-  });
+  return User.findByIdAndUpdate(userId, { isOnline: false, lastSeen: new Date() });
+};
+
+// Get all online users (for emitting)
+export const getOnlineUsers = async () => {
+  return await User.find({ isOnline: true });
 };

@@ -6,6 +6,7 @@ import { useUserStore } from "@/store/user";
 import { socket, SocketEvent } from "@/lib/socket";
 import axios from "axios";
 import { dbUrl } from "@/constants";
+import { FaPaperclip, FaPaperPlane, FaTimes } from "react-icons/fa";
 
 const ChatInput = () => {
   const { user } = useUserStore();
@@ -29,11 +30,7 @@ const ChatInput = () => {
     if (!text.trim() && !file) return;
     if (!user?._id || !contact?._id) return;
 
-    let fileData: {
-      fileName?: string;
-      fileType?: string;
-      fileUrl?: string;
-    } | null = null;
+    let fileData: { fileName?: string; fileType?: string; fileUrl?: string } | null = null;
 
     if (file) {
       const formData = new FormData();
@@ -44,7 +41,7 @@ const ChatInput = () => {
         const res = await axios.post(`${dbUrl}/upload`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        fileData = res.data; // Expecting { fileName, fileType, fileUrl }
+        fileData = res.data;
       } catch (err) {
         console.error("File upload failed:", err);
         setError("File upload failed. Try again.");
@@ -77,8 +74,6 @@ const ChatInput = () => {
 
   const renderFilePreview = () => {
     if (!file) return null;
-
-    // Images: show preview
     if (file.type.startsWith("image/")) {
       return (
         <img
@@ -88,8 +83,6 @@ const ChatInput = () => {
         />
       );
     }
-
-    // Other files: show icon + filename
     return (
       <a
         href={URL.createObjectURL(file)}
@@ -103,28 +96,24 @@ const ChatInput = () => {
 
   return (
     <div className="flex flex-col gap-2">
-      {/* Error */}
       {error && <div className="text-red-500 text-sm">{error}</div>}
 
-      {/* File Preview */}
       {file && (
         <div className="flex items-center gap-2 border p-2 rounded bg-gray-100">
           {renderFilePreview()}
-          <Button
-            size="sm"
-            variant="destructive"
+          <button
             onClick={() => {
               setFile(null);
               if (fileInputRef.current) fileInputRef.current.value = "";
             }}
+            className="p-1 rounded hover:bg-gray-200"
           >
-            Remove
-          </Button>
+            <FaTimes size={14} />
+          </button>
         </div>
       )}
 
-      {/* Input Row */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center">
         <Textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -133,18 +122,29 @@ const ChatInput = () => {
           rows={2}
           disabled={uploading}
         />
+
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          className="p-2 rounded hover:bg-gray-200"
+        >
+          <FaPaperclip size={20} />
+        </button>
         <input
           type="file"
           ref={fileInputRef}
           onChange={(e) => setFile(e.target.files?.[0] || null)}
-          disabled={uploading}
+          className="hidden"
           accept=".jpg,.jpeg,.png,.gif,.bmp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
         />
+
         <Button
           onClick={handleSendMessage}
           disabled={uploading || (!text.trim() && !file)}
+          className="flex items-center justify-center p-2"
         >
-          {uploading ? "Uploading..." : "Send"}
+          {uploading ? "Uploading..." : <FaPaperPlane size={16} />}
         </Button>
       </div>
     </div>
