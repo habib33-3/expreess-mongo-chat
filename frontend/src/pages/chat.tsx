@@ -5,10 +5,13 @@ import AllUsers from "./components/AllUsers";
 import { useEffect } from "react";
 import { socket, SocketEvent } from "@/lib/socket";
 import ChatWindow from "./components/ChatWindow";
+import { useIncomingCall } from "@/hook/useIncomingCall";
 
 const Chat = () => {
   const { user, resetUser } = useUserStore();
   const navigate = useNavigate();
+
+  useIncomingCall()
 
   useEffect(() => {
     if (!user) {
