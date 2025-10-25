@@ -19,15 +19,12 @@ const CallButton = () => {
     const callLink = generateCallLink();
 
     socket.emit(SocketEvent.CALL_REQUEST, {
-      caller: {
-        id: user._id,
-        name: user.name,
-      },
+      caller: { id: user._id, name: user.name },
       calleeId: contact._id,
       callLink,
     });
 
-    // navigate to call link
+    // Navigate only as initiator after the call is confirmed
     navigate(callLink, { state: { initiator: true, contact } });
   };
 

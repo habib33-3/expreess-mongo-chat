@@ -8,8 +8,6 @@ export const useIncomingCall = () => {
   const { user } = useUserStore();
   const navigate = useNavigate();
 
-  console.log("hh")
-
   useEffect(() => {
     if (!user) return;
 

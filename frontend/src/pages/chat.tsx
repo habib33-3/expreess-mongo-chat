@@ -1,35 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { useUserStore } from "@/store/user";
-import { useNavigate } from "react-router";
 import AllUsers from "./components/AllUsers";
-import { useEffect } from "react";
-import { socket, SocketEvent } from "@/lib/socket";
+
 import ChatWindow from "./components/ChatWindow";
-import { useIncomingCall } from "@/hook/useIncomingCall";
 
 const Chat = () => {
   const { user, resetUser } = useUserStore();
-  const navigate = useNavigate();
-
-  useIncomingCall()
-
-  useEffect(() => {
-    if (!user) {
-      navigate("/");
-      return;
-    }
-
-    const handleConnect = () => {
-      socket.emit(SocketEvent.JOIN, user._id);
-    };
-
-    if (socket.connected) handleConnect();
-    else socket.once("connect", handleConnect);
-
-    return () => {
-      if (socket.connected) socket.emit(SocketEvent.LEAVE, user._id);
-    };
-  }, [user, navigate]);
 
   if (!user) return null;
 
@@ -41,7 +17,10 @@ const Chat = () => {
           <h2 className="text-xl font-bold">{user.email}</h2>
           <p className="text-sm text-gray-500">{user.role}</p>
         </div>
-        <Button variant="destructive" onClick={resetUser}>
+        <Button
+          variant="destructive"
+          onClick={resetUser}
+        >
           Logout
         </Button>
       </header>
