@@ -56,7 +56,9 @@ export const streamingVideoChatFeature = {
         });
 
         console.log(
-          `🎥 Broadcaster ${userId} (${socket.id}) started streaming room ${roomId} - "${title || "No title"}"`
+          `🎥 Broadcaster ${userId} (${
+            socket.id
+          }) started streaming room ${roomId} - "${title || "No title"}"`
         );
 
         socket.emit(SocketEvent.START_STREAMING_ACK, {
@@ -89,7 +91,7 @@ export const streamingVideoChatFeature = {
           console.log(
             `👁️ Viewer ${userId} (${socket.id}) joined room ${roomId}, notifying broadcaster ${broadcasterInfo.socketId}`
           );
-          
+
           io.to(broadcasterInfo.socketId).emit(SocketEvent.NEW_VIEWER, {
             viewerId: userId,
             viewerSocketId: socket.id,
@@ -104,11 +106,11 @@ export const streamingVideoChatFeature = {
     socket.on(SocketEvent.OFFER, ({ targetId, offer }: SignalPayload) => {
       const fromUserId = socket.data.userId;
       const targetUserId = socketToUser.get(targetId);
-      
+
       console.log(
         `📤 OFFER: ${fromUserId} (${socket.id}) → ${targetUserId} (${targetId})`
       );
-      
+
       io.to(targetId).emit(SocketEvent.OFFER, {
         offer,
         fromId: socket.id, // Send socket ID so viewer can reply
@@ -118,11 +120,11 @@ export const streamingVideoChatFeature = {
     socket.on(SocketEvent.ANSWER, ({ targetId, answer }: SignalPayload) => {
       const fromUserId = socket.data.userId;
       const targetUserId = socketToUser.get(targetId);
-      
+
       console.log(
         `📤 ANSWER: ${fromUserId} (${socket.id}) → ${targetUserId} (${targetId})`
       );
-      
+
       io.to(targetId).emit(SocketEvent.ANSWER, {
         answer,
         fromId: socket.id, // Send socket ID for peer connection mapping
@@ -134,11 +136,11 @@ export const streamingVideoChatFeature = {
       ({ targetId, candidate }: SignalPayload) => {
         const fromUserId = socket.data.userId;
         const targetUserId = socketToUser.get(targetId);
-        
+
         console.log(
           `🧊 ICE: ${fromUserId} (${socket.id}) → ${targetUserId} (${targetId})`
         );
-        
+
         io.to(targetId).emit(SocketEvent.ICE_CANDIDATE, {
           candidate,
           fromId: socket.id,
@@ -150,7 +152,7 @@ export const streamingVideoChatFeature = {
     socket.on("disconnect", () => {
       const userId = socket.data.userId;
       const roomId = socket.data.roomId;
-      
+
       if (!userId) return;
 
       removeSocketMapping(socket.id);
@@ -160,18 +162,23 @@ export const streamingVideoChatFeature = {
         const viewerSet = viewers.get(roomId)!;
         if (viewerSet.has(socket.id)) {
           viewerSet.delete(socket.id);
-          
+
           // Notify broadcaster
           const broadcasterInfo = broadcasters.get(roomId);
           if (broadcasterInfo) {
-            io.to(broadcasterInfo.socketId).emit(SocketEvent.VIEWER_DISCONNECTED, {
-              socketId: socket.id,
-              userId,
-            });
+            io.to(broadcasterInfo.socketId).emit(
+              SocketEvent.VIEWER_DISCONNECTED,
+              {
+                socketId: socket.id,
+                userId,
+              }
+            );
           }
-          
-          console.log(`👁️ Viewer ${userId} (${socket.id}) disconnected from room ${roomId}`);
-          
+
+          console.log(
+            `👁️ Viewer ${userId} (${socket.id}) disconnected from room ${roomId}`
+          );
+
           if (viewerSet.size === 0) {
             viewers.delete(roomId);
           }
@@ -185,12 +192,12 @@ export const streamingVideoChatFeature = {
           socket
             .to(roomId)
             .emit(SocketEvent.BROADCASTER_DISCONNECTED, { userId });
-          
+
           // Cleanup
           broadcasters.delete(roomId);
           viewers.delete(roomId);
           streamMetadata.delete(roomId);
-          
+
           console.log(
             `🎥 Broadcaster ${userId} (${socket.id}) disconnected from room ${roomId}`
           );
