@@ -1,8 +1,9 @@
 import { getIO } from "./socket.ts";
 import { multiUserChatFeature } from "./socket/chat.ts";
-import { videoChatFeature } from "./socket/video.ts";
+import { streamingVideoChatFeature } from "./socket/video.ts";
 
-const features = [multiUserChatFeature, videoChatFeature]; // add more features
+
+const features = [multiUserChatFeature, streamingVideoChatFeature]; // add more features
 
 export const registerSocketHandlers = () => {
   const io = getIO();

@@ -29,15 +29,24 @@ export const SocketEvent = {
   ONLINE_USERS: "online_users",
   LEAVE: "leave",
 
-  // Video call
-  CALL_REQUEST: "call_request", // caller initiates
-  CALL_RECEIVE: "call_receive", // server notifies callee
-  CALL_ACCEPT: "call_accept", // callee accepts
-  CALL_DECLINE: "call_decline", // callee declines
+  // Video call (1:1)
+  CALL_REQUEST: "call_request",
+  CALL_RECEIVE: "call_receive",
+  CALL_ACCEPT: "call_accept",
+  CALL_DECLINE: "call_decline",
   JOIN_VIDEO_ROOM: "join_video_room",
   OFFER: "offer",
   ANSWER: "answer",
   ICE_CANDIDATE: "ice_candidate",
+
+  // Streaming (1:N)
+  START_STREAMING: "START_STREAMING",
+  START_STREAMING_ACK: "start_streaming_ack", // ✅ add this
+  JOIN_BROADCAST: "join_broadcast",
+  JOIN_VIEWER: "join_viewer",
+  NEW_VIEWER: "new_viewer",
+  VIEWER_DISCONNECTED: "viewer_disconnected",
+  BROADCASTER_DISCONNECTED: "broadcaster_disconnected",
 } as const;
 
 export type SocketEventType = (typeof SocketEvent)[keyof typeof SocketEvent];

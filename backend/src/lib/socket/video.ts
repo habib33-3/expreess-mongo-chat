@@ -1,92 +1,201 @@
-// server/features/videoChat.feature.ts
+// server/features/video.ts
 import { Server, Socket } from "socket.io";
-import { SocketEvent } from "../../constants";
+import { appUrl, SocketEvent } from "../../constants";
 
-/**
- * Maps:
- * - userSockets: userId -> socketId (for direct signaling)
- * - callRooms: userId -> roomId
- */
-const userSockets = new Map<string, string>();
-const callRooms = new Map<string, string>();
+// --- Types ---
+interface StartStreamingPayload {
+  roomId: string;
+  userId: string;
+  title?: string;
+  thumbnailUrl?: string;
+}
+interface JoinViewerPayload {
+  roomId: string;
+  userId: string;
+}
+interface SignalPayload {
+  targetId: string;
+  offer?: any;
+  answer?: any;
+  candidate?: any;
+}
 
-export const videoChatFeature = {
+// --- Maps ---
+const broadcasters = new Map<string, { userId: string; socketId: string }>(); // roomId -> broadcaster info
+const viewers = new Map<string, Set<string>>(); // roomId -> Set<socketId>
+const socketToUser = new Map<string, string>(); // socketId -> userId
+const streamMetadata = new Map<
+  string,
+  { title?: string; thumbnailUrl?: string }
+>();
+
+export const streamingVideoChatFeature = {
   register: (io: Server, socket: Socket) => {
-    // --- Join video room & bind userId to socket ---
-    socket.on(SocketEvent.JOIN_VIDEO_ROOM, ({ roomId, userId }) => {
-      socket.join(roomId);
-      socket.data.userId = userId;
-      userSockets.set(userId, socket.id);
-      callRooms.set(userId, roomId);
-      console.log(`User ${userId} joined room ${roomId} (socket ${socket.id})`);
-    });
+    const addSocketMapping = (userId: string, socketId: string) => {
+      socketToUser.set(socketId, userId);
+    };
 
-    // --- Caller initiates call ---
-    socket.on(SocketEvent.CALL_REQUEST, ({ caller, calleeId, callLink }) => {
-      const calleeSocketId = userSockets.get(calleeId);
-      if (calleeSocketId) {
-        io.to(calleeSocketId).emit(SocketEvent.CALL_RECEIVE, {
-          caller,
-          callLink,
+    const removeSocketMapping = (socketId: string) => {
+      socketToUser.delete(socketId);
+    };
+
+    // --- Start streaming (broadcaster) ---
+    socket.on(
+      SocketEvent.START_STREAMING,
+      ({ roomId, userId, title, thumbnailUrl }: StartStreamingPayload) => {
+        socket.join(roomId);
+        socket.data.userId = userId;
+        socket.data.roomId = roomId;
+
+        broadcasters.set(roomId, { userId, socketId: socket.id });
+        addSocketMapping(userId, socket.id);
+
+        streamMetadata.set(roomId, {
+          ...(title !== undefined && { title }),
+          ...(thumbnailUrl !== undefined && { thumbnailUrl }),
         });
-      } else {
-        socket.emit(SocketEvent.CALL_FAILED, { reason: "callee-offline" });
-      }
-    });
 
-    // --- Callee accepts call ---
-    socket.on(SocketEvent.CALL_ACCEPT, ({ targetId, callee }) => {
-      const targetSocketId = userSockets.get(targetId);
-      if (targetSocketId) {
-        io.to(targetSocketId).emit(SocketEvent.CALL_ACCEPT, { callee });
-      }
-    });
+        console.log(
+          `🎥 Broadcaster ${userId} (${socket.id}) started streaming room ${roomId} - "${title || "No title"}"`
+        );
 
-    // --- SDP Offer ---
-    socket.on(SocketEvent.OFFER, ({ targetId, offer }) => {
-      const targetSocketId = userSockets.get(targetId);
-      if (targetSocketId) {
-        io.to(targetSocketId).emit(SocketEvent.OFFER, {
-          offer,
-          fromId: socket.data.userId,
+        socket.emit(SocketEvent.START_STREAMING_ACK, {
+          success: true,
+          streamId: roomId,
+          link: `${appUrl}/watch/${roomId}`,
         });
       }
-    });
+    );
 
-    // --- SDP Answer ---
-    socket.on(SocketEvent.ANSWER, ({ targetId, answer }) => {
-      const targetSocketId = userSockets.get(targetId);
-      if (targetSocketId) {
-        io.to(targetSocketId).emit(SocketEvent.ANSWER, {
-          answer,
-          fromId: socket.data.userId,
-        });
-      }
-    });
+    // --- Viewer joins broadcast ---
+    socket.on(
+      SocketEvent.JOIN_VIEWER,
+      ({ roomId, userId }: JoinViewerPayload) => {
+        socket.join(roomId);
+        socket.data.userId = userId;
+        socket.data.roomId = roomId;
+        addSocketMapping(userId, socket.id);
 
-    // --- ICE Candidate ---
-    socket.on(SocketEvent.ICE_CANDIDATE, ({ targetId, candidate }) => {
-      const targetSocketId = userSockets.get(targetId);
-      if (targetSocketId) {
-        io.to(targetSocketId).emit(SocketEvent.ICE_CANDIDATE, {
-          candidate,
-          fromId: socket.data.userId,
-        });
-      }
-    });
+        if (!viewers.has(roomId)) viewers.set(roomId, new Set());
+        viewers.get(roomId)!.add(socket.id);
 
-    // --- Handle disconnect ---
-    socket.on("disconnect", () => {
-      const userId = socket.data.userId as string | undefined;
-      if (userId) {
-        const roomId = callRooms.get(userId);
-        if (roomId) {
-          socket.to(roomId).emit("user-disconnected", { userId });
-          callRooms.delete(userId);
+        // Send metadata to viewer
+        const metadata = streamMetadata.get(roomId);
+        socket.emit("stream_metadata", metadata);
+
+        // Notify broadcaster with BOTH userId and socketId
+        const broadcasterInfo = broadcasters.get(roomId);
+        if (broadcasterInfo) {
+          console.log(
+            `👁️ Viewer ${userId} (${socket.id}) joined room ${roomId}, notifying broadcaster ${broadcasterInfo.socketId}`
+          );
+          
+          io.to(broadcasterInfo.socketId).emit(SocketEvent.NEW_VIEWER, {
+            viewerId: userId,
+            viewerSocketId: socket.id,
+          });
+        } else {
+          console.warn(`⚠️ No broadcaster found for room ${roomId}`);
         }
-        userSockets.delete(userId);
       }
-      console.log(`Socket disconnected: ${socket.id}`);
+    );
+
+    // --- WebRTC signaling (using socketId directly) ---
+    socket.on(SocketEvent.OFFER, ({ targetId, offer }: SignalPayload) => {
+      const fromUserId = socket.data.userId;
+      const targetUserId = socketToUser.get(targetId);
+      
+      console.log(
+        `📤 OFFER: ${fromUserId} (${socket.id}) → ${targetUserId} (${targetId})`
+      );
+      
+      io.to(targetId).emit(SocketEvent.OFFER, {
+        offer,
+        fromId: socket.id, // Send socket ID so viewer can reply
+      });
+    });
+
+    socket.on(SocketEvent.ANSWER, ({ targetId, answer }: SignalPayload) => {
+      const fromUserId = socket.data.userId;
+      const targetUserId = socketToUser.get(targetId);
+      
+      console.log(
+        `📤 ANSWER: ${fromUserId} (${socket.id}) → ${targetUserId} (${targetId})`
+      );
+      
+      io.to(targetId).emit(SocketEvent.ANSWER, {
+        answer,
+        fromId: socket.id, // Send socket ID for peer connection mapping
+      });
+    });
+
+    socket.on(
+      SocketEvent.ICE_CANDIDATE,
+      ({ targetId, candidate }: SignalPayload) => {
+        const fromUserId = socket.data.userId;
+        const targetUserId = socketToUser.get(targetId);
+        
+        console.log(
+          `🧊 ICE: ${fromUserId} (${socket.id}) → ${targetUserId} (${targetId})`
+        );
+        
+        io.to(targetId).emit(SocketEvent.ICE_CANDIDATE, {
+          candidate,
+          fromId: socket.id,
+        });
+      }
+    );
+
+    // --- Disconnect ---
+    socket.on("disconnect", () => {
+      const userId = socket.data.userId;
+      const roomId = socket.data.roomId;
+      
+      if (!userId) return;
+
+      removeSocketMapping(socket.id);
+
+      // Check if this was a viewer
+      if (roomId && viewers.has(roomId)) {
+        const viewerSet = viewers.get(roomId)!;
+        if (viewerSet.has(socket.id)) {
+          viewerSet.delete(socket.id);
+          
+          // Notify broadcaster
+          const broadcasterInfo = broadcasters.get(roomId);
+          if (broadcasterInfo) {
+            io.to(broadcasterInfo.socketId).emit(SocketEvent.VIEWER_DISCONNECTED, {
+              socketId: socket.id,
+              userId,
+            });
+          }
+          
+          console.log(`👁️ Viewer ${userId} (${socket.id}) disconnected from room ${roomId}`);
+          
+          if (viewerSet.size === 0) {
+            viewers.delete(roomId);
+          }
+        }
+      }
+
+      // Check if this was a broadcaster
+      broadcasters.forEach((broadcasterInfo, roomId) => {
+        if (broadcasterInfo.socketId === socket.id) {
+          // Notify all viewers
+          socket
+            .to(roomId)
+            .emit(SocketEvent.BROADCASTER_DISCONNECTED, { userId });
+          
+          // Cleanup
+          broadcasters.delete(roomId);
+          viewers.delete(roomId);
+          streamMetadata.delete(roomId);
+          
+          console.log(
+            `🎥 Broadcaster ${userId} (${socket.id}) disconnected from room ${roomId}`
+          );
+        }
+      });
     });
   },
 };
