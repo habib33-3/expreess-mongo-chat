@@ -19,4 +19,5 @@ export enum SocketEvent {
   OFFER = "offer", // SDP offer
   ANSWER = "answer", // SDP answer
   ICE_CANDIDATE = "ice_candidate", // ICE candidate exchange
+  CALL_FAILED = "call_failed",
 }
