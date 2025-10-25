@@ -15,6 +15,8 @@ const port = process.env.PORT || 5000;
 
 const server = http.createServer(app);
 
+export const cors_allowed_origins = ["http://localhost:5173","https://zcr3h7z8-5173.inc1.devtunnels.ms"];
+
 initSocket(server);
 registerSocketHandlers();
 
@@ -27,7 +29,7 @@ app.use(
 );
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: cors_allowed_origins,
   })
 );
 

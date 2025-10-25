@@ -1,3 +1,5 @@
+// chat.ts
+
 import { Server, Socket } from "socket.io";
 import { SocketEvent } from "../../constants";
 import {
@@ -26,6 +28,8 @@ export const multiUserChatFeature = {
 
       await userJoinService(userId); // mark online in DB
       onlineUsers.add(userId);
+
+        socket.join(userId);
 
       await broadcastOnlineUsers();
       console.log(`🟢 User joined: ${userId}`);
