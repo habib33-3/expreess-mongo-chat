@@ -25,7 +25,8 @@ const App = () => {
   }
 
   const handleSubmit = async () => {
-    if (!role) {
+    try {
+      if (!role) {
       alert("Please select a role!");
       return;
     }
@@ -33,6 +34,10 @@ const App = () => {
     const res = await axios.post(`${dbUrl}/user/login`, { email, role });
     console.log(res);
     setUser(res.data.result);
+    } catch (error) {
+      alert(error);
+    }
+    
   };
 
   return (
