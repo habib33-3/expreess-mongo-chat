@@ -58,6 +58,7 @@ const AllUsers = () => {
         [data.otherUserId]: {
           text: data.lastMessage?.text || "",
           count: data.unreadCount,
+          messageStatus: data.lastMessage?.messageStatus || "sent",
         },
       }));
     };
@@ -65,6 +66,8 @@ const AllUsers = () => {
     socket.on(SocketEvent.LOAD_LAST_MESSAGE_AND_COUNT, handler);
     return () => {socket.off(SocketEvent.LOAD_LAST_MESSAGE_AND_COUNT, handler);}
   }, []);
+
+  console.log(lastMap)
 
   return (
     <div className="flex flex-col gap-2">
