@@ -6,6 +6,7 @@ export type User = {
   email: string;
   role: Role;
   isOnline: boolean;
+  avatar?: string;
 };
 
 export type Message = {
