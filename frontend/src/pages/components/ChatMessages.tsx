@@ -13,18 +13,29 @@ const ChatMessages = () => {
   useEffect(() => {
     if (!user?._id || !contact?._id) return;
 
-    // --- Load chat history and join conversation room ---
+    // load history
     socket.emit(SocketEvent.LOAD_MESSAGES, {
       senderId: user._id,
       receiverId: contact._id,
     });
 
-    const handleLoadMessages = (msgs: Message[]) => setMessages(msgs);
+    const handleLoadMessages = (msgs: Message[]) => {
+      setMessages(msgs);
+
+      // auto mark seen for all incoming un-read messages
+      msgs.forEach((m) => {
+        if (m.sender !== user._id && m.messageStatus !== "read") {
+          socket.emit(SocketEvent.MESSAGE_SEEN, {
+            messageId: m._id,
+            receiverId: user._id,
+          });
+        }
+      });
+    };
 
     const handleReceiveMessage = (msg: Message) => {
       setMessages((prev) => [...prev, msg]);
 
-      // mark delivered WHEN RECEIVING a message from the other user only
       if (msg.sender !== user._id) {
         socket.emit(SocketEvent.MESSAGE_DELIVERED, {
           messageId: msg._id,
@@ -33,12 +44,36 @@ const ChatMessages = () => {
       }
     };
 
+    const handleDelivered = (updated: Message) => {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m._id === updated._id
+            ? { ...m, messageStatus: updated.messageStatus }
+            : m
+        )
+      );
+    };
+
+    const handleSeen = (updated: Message) => {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m._id === updated._id
+            ? { ...m, messageStatus: updated.messageStatus }
+            : m
+        )
+      );
+    };
+
     socket.on(SocketEvent.LOAD_MESSAGES, handleLoadMessages);
     socket.on(SocketEvent.RECEIVE_MESSAGE, handleReceiveMessage);
+    socket.on(SocketEvent.MESSAGE_DELIVERED, handleDelivered);
+    socket.on(SocketEvent.MESSAGE_SEEN, handleSeen);
 
     return () => {
       socket.off(SocketEvent.LOAD_MESSAGES, handleLoadMessages);
       socket.off(SocketEvent.RECEIVE_MESSAGE, handleReceiveMessage);
+      socket.off(SocketEvent.MESSAGE_DELIVERED, handleDelivered);
+      socket.off(SocketEvent.MESSAGE_SEEN, handleSeen);
     };
   }, [contact?._id, user?._id]);
 

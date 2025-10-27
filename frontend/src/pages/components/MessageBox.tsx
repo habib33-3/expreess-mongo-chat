@@ -1,30 +1,16 @@
-import { socket, SocketEvent } from "@/lib/socket";
 import { useUserStore } from "@/store/user";
 import type { Message } from "@/types/types";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 const MessageBox = ({ message }: { message: Message }) => {
   const { user } = useUserStore();
   const isOwnMessage = message.sender === user?._id;
-  const seenSentRef = useRef(false);
 
   useEffect(() => {
-    // Scroll into view
     document
       .getElementById(`message-${message._id}`)
       ?.scrollIntoView({ behavior: "smooth" });
-
-    // Mark as seen ONCE if not my message
-    if (!isOwnMessage && !seenSentRef.current) {
-      seenSentRef.current = true;
-      socket.emit(SocketEvent.MESSAGE_SEEN, {
-        messageId: message._id,
-        receiverId: user?._id,
-      });
-    }
-  }, [isOwnMessage, message._id, user?._id]);
-
-  console.log(message)
+  }, [message._id]);
 
   return (
     <div
@@ -37,15 +23,14 @@ const MessageBox = ({ message }: { message: Message }) => {
         `}
       >
         {message.text && <div>{message.text}</div>}
-        {
-          message.messageStatus && isOwnMessage && (
-            <div className="text-xs text-gray-300 self-end">
-              {message.messageStatus === "sent" && "✓ Sent"}
-              {message.messageStatus === "delivered" && "✓ Delivered"}
-              {message.messageStatus === "read" && "✓ Read"}
-            </div>
-          )
-        }
+
+        {isOwnMessage && message.messageStatus && (
+          <div className="text-xs text-gray-300 self-end">
+            {message.messageStatus === "sent" && "✓ Sent"}
+            {message.messageStatus === "delivered" && "✓ Delivered"}
+            {message.messageStatus === "read" && "✓ Read"}
+          </div>
+        )}
       </div>
     </div>
   );
