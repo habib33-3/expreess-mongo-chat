@@ -10,6 +10,10 @@ import {
   handleTypingService,
 } from "../../services/chat.services";
 import { User } from "../../model/user.model";
+import {
+  markDeliveredService,
+  markSeenService,
+} from "../../services/message.services";
 
 // Track online users per socket
 const onlineUsers = new Set<string>();
@@ -29,7 +33,7 @@ export const multiUserChatFeature = {
       await userJoinService(userId); // mark online in DB
       onlineUsers.add(userId);
 
-        socket.join(userId);
+      socket.join(userId);
 
       await broadcastOnlineUsers();
       console.log(`🟢 User joined: ${userId}`);
@@ -84,6 +88,31 @@ export const multiUserChatFeature = {
     socket.on(SocketEvent.STOP_TYPING, ({ senderId, receiverId }) =>
       handleTypingService(io, SocketEvent.STOP_TYPING, senderId, receiverId)
     );
+
+    socket.on(
+      SocketEvent.MESSAGE_DELIVERED,
+      async ({ messageId, receiverId }) => {
+        console.log("Marking message as delivered:", messageId);
+        const updated = await markDeliveredService(messageId);
+        if (!updated) return;
+
+        // notify sender so it can update UI
+        io.to(updated.sender.toString()).emit(
+          SocketEvent.MESSAGE_DELIVERED,
+          updated
+        );
+      }
+    );
+
+    // --- Mark Seen ---
+    socket.on(SocketEvent.MESSAGE_SEEN, async ({ messageId, receiverId }) => {
+      console.log("Marking message as seen:", messageId);
+      const updated = await markSeenService(messageId);
+      if (!updated) return;
+
+      // notify sender so UI shows seen tick
+      io.to(updated.sender.toString()).emit(SocketEvent.MESSAGE_SEEN, updated);
+    });
 
     // --- Disconnect ---
     socket.on("disconnect", async () => {

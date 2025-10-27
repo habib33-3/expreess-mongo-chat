@@ -9,6 +9,8 @@ export enum SocketEvent {
   TYPING = "typing",
   STOP_TYPING = "stop_typing",
   ONLINE_USERS = "online_users",
+  MESSAGE_DELIVERED = "message_delivered",
+  MESSAGE_SEEN = "message_seen",
 
   // --- Video Call (1:1) ---
   CALL_REQUEST = "call_request",
@@ -32,5 +34,5 @@ export enum SocketEvent {
   START_STREAMING_ACK = "start_streaming_ack",
 }
 
-// export const appUrl = "http://localhost:5173";
-export const appUrl = "https://zcr3h7z8-5173.inc1.devtunnels.ms";
+export const appUrl = "http://localhost:5173";
+// export const appUrl = "https://zcr3h7z8-5173.inc1.devtunnels.ms";

@@ -22,22 +22,25 @@ const ChatMessages = () => {
     const handleLoadMessages = (msgs: Message[]) => setMessages(msgs);
 
     const handleReceiveMessage = (msg: Message) => {
-      // Simply append the message — backend ensures it's for this conversation
       setMessages((prev) => [...prev, msg]);
+
+      // mark delivered WHEN RECEIVING a message from the other user only
+      if (msg.sender !== user._id) {
+        socket.emit(SocketEvent.MESSAGE_DELIVERED, {
+          messageId: msg._id,
+          receiverId: user._id,
+        });
+      }
     };
 
-    // --- Register socket listeners ---
     socket.on(SocketEvent.LOAD_MESSAGES, handleLoadMessages);
     socket.on(SocketEvent.RECEIVE_MESSAGE, handleReceiveMessage);
 
-    // --- Cleanup ---
     return () => {
       socket.off(SocketEvent.LOAD_MESSAGES, handleLoadMessages);
       socket.off(SocketEvent.RECEIVE_MESSAGE, handleReceiveMessage);
     };
   }, [contact?._id, user?._id]);
-
-  console.log(messages);
 
   return (
     <div className="flex flex-col gap-2 overflow-y-auto p-2">

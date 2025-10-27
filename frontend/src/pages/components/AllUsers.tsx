@@ -11,16 +11,21 @@ const AllUsers = () => {
   const { user } = useUserStore();
   const { contact, setContact } = useContactStore();
 
-  // Initial fetch
+  // --- Fetch all users except current user ---
   useEffect(() => {
-    if (!user?.email) return;
+    if (!user?._id || !user?.email) return;
+
     axios
       .get(`${dbUrl}/user/all`, { params: { email: user.email } })
-      .then((res) => setUsers(res.data))
+      .then((res) => {
+        // 🔥 Filter out current user
+        const others = res.data.filter((u: User) => u._id !== user._id);
+        setUsers(others);
+      })
       .catch(console.error);
-  }, [user?.email]);
+  }, [user?._id, user?.email]);
 
-  // Listen for online users
+  // --- Listen for online users ---
   useEffect(() => {
     const handleOnlineUsers = (onlineUsers: User[]) => {
       setUsers((prev) => {
@@ -29,9 +34,10 @@ const AllUsers = () => {
           isOnline: onlineUsers.some((o) => o._id === u._id),
         }));
 
+        // add any new online users (excluding self)
         onlineUsers.forEach((u) => {
-          if (!updated.find((x) => x._id === u._id)) {
-            updated.push(u);
+          if (u._id !== user?._id && !updated.find((x) => x._id === u._id)) {
+            updated.push({ ...u, isOnline: true });
           }
         });
 
@@ -44,8 +50,9 @@ const AllUsers = () => {
     return () => {
       socket.off(SocketEvent.ONLINE_USERS, handleOnlineUsers);
     };
-  }, [users.length]);
+  }, [user?._id]);
 
+  // --- Render UI ---
   return (
     <div className="flex flex-col gap-2">
       <h2 className="text-lg font-semibold mb-2">Contacts</h2>

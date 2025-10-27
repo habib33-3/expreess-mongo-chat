@@ -1,5 +1,5 @@
 import { getObjectId } from "../lib/util";
-import { Message } from "../model/message.model";
+import { Message, messageStatuses } from "../model/message.model";
 import { findOrCreateConversation } from "./conversation.services";
 
 export const sendMessageService = async (
@@ -42,4 +42,21 @@ export const createAndSendMessage = async (
   const message = await sendMessageService(senderId, receiverId, text);
 
   return { conversationId: conversation._id!.toString(), message };
+};
+
+export const markDeliveredService = async (messageId: string) => {
+  
+  return Message.findByIdAndUpdate(
+    messageId,
+    { messageStatus: messageStatuses[1] },
+    { new: true }
+  );
+};
+
+export const markSeenService = async (messageId: string) => {
+  return Message.findByIdAndUpdate(
+    messageId,
+    { messageStatus: messageStatuses[2] },
+    { new: true }
+  );
 };
