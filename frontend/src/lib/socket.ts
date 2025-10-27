@@ -27,6 +27,9 @@ export const SocketEvent = {
   TYPING: "typing",
   STOP_TYPING: "stop_typing",
   ONLINE_USERS: "online_users",
+  MESSAGE_DELIVERED: "message_delivered",
+  MESSAGE_SEEN: "message_seen",
+  LOAD_LAST_MESSAGE_AND_COUNT: "load_last_message_and_count",
   LEAVE: "leave",
 
   // Video call (1:1)

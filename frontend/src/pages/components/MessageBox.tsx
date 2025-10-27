@@ -1,10 +1,11 @@
 import { useUserStore } from "@/store/user";
 import type { Message } from "@/types/types";
+import { useEffect } from "react";
 
 const MessageBox = ({ message }: { message: Message }) => {
   const { user } = useUserStore();
-  const { text, fileName, fileType, fileUrl } = message;
   const isOwnMessage = message.sender === user?._id;
+  const { text, fileName, fileType, fileUrl } = message;
 
   const renderFile = () => {
     if (!fileUrl) return null;
@@ -36,16 +37,23 @@ const MessageBox = ({ message }: { message: Message }) => {
         href={fileUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-1 underline text-sm truncate max-w-xs"
+        className="flex items-center gap-2 underline"
       >
         <span>{icon}</span>
-        <span>{fileName || "Download file"}</span>
+        <span className="truncate max-w-32">{fileName}</span>
       </a>
     );
   };
 
+  useEffect(() => {
+    document
+      .getElementById(`message-${message._id}`)
+      ?.scrollIntoView({ behavior: "smooth" });
+  }, [message._id]);
+
   return (
     <div
+      id={`message-${message._id}`}
       className={`flex ${isOwnMessage ? "justify-end" : "justify-start"} my-1`}
     >
       <div
@@ -54,13 +62,20 @@ const MessageBox = ({ message }: { message: Message }) => {
             isOwnMessage
               ? "bg-blue-500 text-white"
               : "bg-gray-200 text-gray-800"
-          }`}
+          }
+        `}
       >
-        {/* Text */}
         {text && <div>{text}</div>}
 
-        {/* File */}
         {renderFile()}
+
+        {isOwnMessage && message.messageStatus && (
+          <div className="text-xs text-gray-300 self-end">
+            {message.messageStatus === "sent" && "✓ Sent"}
+            {message.messageStatus === "delivered" && "✓ Delivered"}
+            {message.messageStatus === "read" && "✓ Read"}
+          </div>
+        )}
       </div>
     </div>
   );

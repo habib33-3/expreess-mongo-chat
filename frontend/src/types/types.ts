@@ -16,4 +16,5 @@ export type Message = {
   fileName?: string;
   fileType?: string;
   fileUrl?: string;
+  messageStatus?: "sent" | "delivered" | "read";
 };

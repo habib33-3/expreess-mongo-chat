@@ -8,8 +8,11 @@ import {
   loadConversationMessagesService,
   sendMessageServiceLayer,
   handleTypingService,
+  markDeliveredService,
+  markSeenService,
 } from "../../services/chat.services";
 import { User } from "../../model/user.model";
+import { getLastMessageInConversationAndCount } from "../../services/conversation.services";
 
 // Track online users per socket
 const onlineUsers = new Set<string>();
@@ -29,7 +32,7 @@ export const multiUserChatFeature = {
       await userJoinService(userId); // mark online in DB
       onlineUsers.add(userId);
 
-        socket.join(userId);
+      socket.join(userId);
 
       await broadcastOnlineUsers();
       console.log(`🟢 User joined: ${userId}`);
@@ -55,6 +58,36 @@ export const multiUserChatFeature = {
       socket.emit(SocketEvent.LOAD_MESSAGES, messages);
       socket.join(conversation._id!.toString());
     });
+
+    socket.on(
+      SocketEvent.LOAD_LAST_MESSAGE_AND_COUNT,
+      async (payload?: { otherUserId: string; currentUserId: string }) => {
+        // ---- SAFETY GUARD ----
+        if (!payload) return;
+        const { otherUserId, currentUserId } = payload;
+        if (!otherUserId || !currentUserId) return;
+        // -----------------------
+
+        try {
+          const data = await getLastMessageInConversationAndCount(
+            otherUserId,
+            currentUserId
+          );
+
+          socket.emit(SocketEvent.LOAD_LAST_MESSAGE_AND_COUNT, {
+            otherUserId, // add this!
+            lastMessage: data.lastMessage,
+            unreadCount: data.unreadCount,
+          });
+        } catch (err) {
+          socket.emit(SocketEvent.LOAD_LAST_MESSAGE_AND_COUNT, {
+            otherUserId,
+            lastMessage: null,
+            unreadCount: 0,
+          });
+        }
+      }
+    );
 
     // --- Send message ---
     socket.on(
@@ -84,6 +117,31 @@ export const multiUserChatFeature = {
     socket.on(SocketEvent.STOP_TYPING, ({ senderId, receiverId }) =>
       handleTypingService(io, SocketEvent.STOP_TYPING, senderId, receiverId)
     );
+
+    socket.on(
+      SocketEvent.MESSAGE_DELIVERED,
+      async ({ messageId, receiverId }) => {
+        console.log("Marking message as delivered:", messageId);
+        const updated = await markDeliveredService(messageId);
+        if (!updated) return;
+
+        // notify sender so it can update UI
+        io.to(updated.sender.toString()).emit(
+          SocketEvent.MESSAGE_DELIVERED,
+          updated
+        );
+      }
+    );
+
+    // --- Mark Seen ---
+    socket.on(SocketEvent.MESSAGE_SEEN, async ({ messageId, receiverId }) => {
+      console.log("Marking message as seen:", messageId);
+      const updated = await markSeenService(messageId);
+      if (!updated) return;
+
+      // notify sender so UI shows seen tick
+      io.to(updated.sender.toString()).emit(SocketEvent.MESSAGE_SEEN, updated);
+    });
 
     // --- Disconnect ---
     socket.on("disconnect", async () => {
