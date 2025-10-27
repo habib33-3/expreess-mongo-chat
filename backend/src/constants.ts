@@ -11,6 +11,7 @@ export enum SocketEvent {
   ONLINE_USERS = "online_users",
   MESSAGE_DELIVERED = "message_delivered",
   MESSAGE_SEEN = "message_seen",
+  LOAD_LAST_MESSAGE_AND_COUNT = "load_last_message_and_count",
 
   // --- Video Call (1:1) ---
   CALL_REQUEST = "call_request",

@@ -8,12 +8,11 @@ import {
   loadConversationMessagesService,
   sendMessageServiceLayer,
   handleTypingService,
-} from "../../services/chat.services";
-import { User } from "../../model/user.model";
-import {
   markDeliveredService,
   markSeenService,
-} from "../../services/message.services";
+} from "../../services/chat.services";
+import { User } from "../../model/user.model";
+import { getLastMessageInConversationAndCount } from "../../services/conversation.services";
 
 // Track online users per socket
 const onlineUsers = new Set<string>();
@@ -59,6 +58,36 @@ export const multiUserChatFeature = {
       socket.emit(SocketEvent.LOAD_MESSAGES, messages);
       socket.join(conversation._id!.toString());
     });
+
+    socket.on(
+      SocketEvent.LOAD_LAST_MESSAGE_AND_COUNT,
+      async (payload?: { otherUserId: string; currentUserId: string }) => {
+        // ---- SAFETY GUARD ----
+        if (!payload) return;
+        const { otherUserId, currentUserId } = payload;
+        if (!otherUserId || !currentUserId) return;
+        // -----------------------
+
+        try {
+          const data = await getLastMessageInConversationAndCount(
+            otherUserId,
+            currentUserId
+          );
+
+          socket.emit(SocketEvent.LOAD_LAST_MESSAGE_AND_COUNT, {
+            otherUserId, // add this!
+            lastMessage: data.lastMessage,
+            unreadCount: data.unreadCount,
+          });
+        } catch (err) {
+          socket.emit(SocketEvent.LOAD_LAST_MESSAGE_AND_COUNT, {
+            otherUserId,
+            lastMessage: null,
+            unreadCount: 0,
+          });
+        }
+      }
+    );
 
     // --- Send message ---
     socket.on(

@@ -3,6 +3,7 @@ import mongoose, { Document, Model, Schema, Types } from "mongoose";
 export interface IConversation extends Document {
   participants: Types.ObjectId[];
   createdAt: Date;
+  lastMessage?: Types.ObjectId;
 }
 
 const ConversationSchema = new Schema<IConversation>({
@@ -15,6 +16,7 @@ const ConversationSchema = new Schema<IConversation>({
     ],
   },
   createdAt: { type: Date, default: Date.now },
+  lastMessage: { type: Schema.Types.ObjectId, ref: "Message" },
 });
 
 ConversationSchema.pre("save", function (next) {

@@ -1,15 +1,17 @@
-import { useContactStore } from "@/store/chat";
 import { useUserStore } from "@/store/user";
-import type { User } from "@/types/types";
+import type { Message, User } from "@/types/types";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { dbUrl } from "@/constants";
 import { socket, SocketEvent } from "@/lib/socket";
+import Contact from "./Contact";
 
 const AllUsers = () => {
   const [users, setUsers] = useState<User[]>([]);
+  const [lastMap, setLastMap] = useState<
+    Record<string, { text: string; count: number }>
+  >({});
   const { user } = useUserStore();
-  const { contact, setContact } = useContactStore();
 
   // --- Fetch all users except current user ---
   useEffect(() => {
@@ -18,14 +20,13 @@ const AllUsers = () => {
     axios
       .get(`${dbUrl}/user/all`, { params: { email: user.email } })
       .then((res) => {
-        // 🔥 Filter out current user
         const others = res.data.filter((u: User) => u._id !== user._id);
         setUsers(others);
       })
       .catch(console.error);
   }, [user?._id, user?.email]);
 
-  // --- Listen for online users ---
+  // --- Listen for ONLINE_USERS ---
   useEffect(() => {
     const handleOnlineUsers = (onlineUsers: User[]) => {
       setUsers((prev) => {
@@ -33,47 +34,45 @@ const AllUsers = () => {
           ...u,
           isOnline: onlineUsers.some((o) => o._id === u._id),
         }));
-
-        // add any new online users (excluding self)
         onlineUsers.forEach((u) => {
           if (u._id !== user?._id && !updated.find((x) => x._id === u._id)) {
             updated.push({ ...u, isOnline: true });
           }
         });
-
         return updated;
       });
     };
-
     socket.on(SocketEvent.ONLINE_USERS, handleOnlineUsers);
-
-    return () => {
-      socket.off(SocketEvent.ONLINE_USERS, handleOnlineUsers);
-    };
+    return () => {socket.off(SocketEvent.ONLINE_USERS, handleOnlineUsers);}
   }, [user?._id]);
 
-  // --- Render UI ---
+  // --- GLOBAL listener: last message + unreadCount ---
+  useEffect(() => {
+    const handler = (data: {
+      otherUserId: string;
+      lastMessage: Message | null;
+      unreadCount: number;
+    }) => {
+      setLastMap((prev) => ({
+        ...prev,
+        [data.otherUserId]: {
+          text: data.lastMessage?.text || "",
+          count: data.unreadCount,
+        },
+      }));
+    };
+
+    socket.on(SocketEvent.LOAD_LAST_MESSAGE_AND_COUNT, handler);
+    return () => {socket.off(SocketEvent.LOAD_LAST_MESSAGE_AND_COUNT, handler);}
+  }, []);
+
   return (
     <div className="flex flex-col gap-2">
       <h2 className="text-lg font-semibold mb-2">Contacts</h2>
       <ul className="flex flex-col gap-1">
         {users.map((u) => (
           <li key={u._id}>
-            <button
-              onClick={() => setContact(u)}
-              className={`flex justify-between items-center w-full px-3 py-2 rounded-md ${
-                u._id === contact?._id ? "bg-blue-100" : "hover:bg-gray-100"
-              }`}
-            >
-              <span>{u.email}</span>
-              <span
-                className={`text-sm ${
-                  u.isOnline ? "text-green-500" : "text-gray-400"
-                }`}
-              >
-                ● {u.isOnline ? "Online" : "Offline"}
-              </span>
-            </button>
+            <Contact contact={u} lastMessage={lastMap[u._id]} />
           </li>
         ))}
       </ul>
