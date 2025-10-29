@@ -1,5 +1,4 @@
-export const dbUrl = "http://localhost:5000";
-// export const dbUrl = "https://zcr3h7z8-5000.inc1.devtunnels.ms";
+export const dbUrl = import.meta.env.VITE_DB_URL || "http://localhost:5001";
 
 export const roles = ["seller", "customer"] as const;
 

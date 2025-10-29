@@ -35,5 +35,4 @@ export enum SocketEvent {
   START_STREAMING_ACK = "start_streaming_ack",
 }
 
-export const appUrl = "http://localhost:5173";
-// export const appUrl = "https://zcr3h7z8-5173.inc1.devtunnels.ms";
+export const appUrl = process.env.APP_URL || "http://localhost:5173";

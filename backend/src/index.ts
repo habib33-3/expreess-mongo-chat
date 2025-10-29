@@ -9,13 +9,18 @@ import { userRouter } from "./routes/user.routes";
 import path from "path";
 import { uploadRouter } from "./routes/upload.routes";
 import listEndpoints from "express-list-endpoints";
+import { zegoRoutes } from "./routes/zego.routes";
 const app = express();
 
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 5001;
 
 const server = http.createServer(app);
 
-export const cors_allowed_origins = ["http://localhost:5173","https://zcr3h7z8-5173.inc1.devtunnels.ms"];
+// export const cors_allowed_origins = [
+//   "http://localhost:5173",
+//   "https://zcr3h7z8-5173.inc1.devtunnels.ms",
+//   "https://zcr3h7z8-5173.inc1.devtunnels.ms"
+// ];
 
 initSocket(server);
 registerSocketHandlers();
@@ -29,12 +34,13 @@ app.use(
 );
 app.use(
   cors({
-    origin: cors_allowed_origins,
+    origin: "*",
   })
 );
 
 app.use("/user", userRouter);
 app.use("/upload", uploadRouter);
+app.use("/zego", zegoRoutes);
 
 console.log(listEndpoints(app));
 

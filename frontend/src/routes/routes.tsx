@@ -6,6 +6,8 @@ import VideoCallPage from "@/pages/VideoCallPage";
 import RootLayout from "@/layout/RootLayout";
 import Streamer from "@/pages/Broadcaster";
 import Stream from "@/pages/Viewer";
+import BroadcasterZego from "@/pages/zego/ZegoBroadCaster";
+import ViewerZego from "@/pages/zego/ZegoViewer";
 
 export const router = createBrowserRouter([
   {
@@ -25,6 +27,14 @@ export const router = createBrowserRouter([
           />
         ),
       },
+      {
+        path:"/zego-broadcaster",
+        element: <BroadcasterZego />,
+      },
+      {
+        path:"/zego-viewer",
+        element: <ViewerZego />,
+      }
     ],
   },
   {
