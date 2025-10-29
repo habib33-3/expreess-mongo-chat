@@ -49,7 +49,18 @@ const BroadcasterZego = () => {
         userID: user._id,
         roomID: roomIdRef.current,
       });
-      const kitToken = data.token;
+
+console.log("Zego token data", data);
+
+      const kitToken =ZegoUIKitPrebuilt.generateKitTokenForProduction(
+        data.appID,
+        data.token,
+        roomIdRef.current,
+        user._id,
+     
+      );
+
+      
 
       // 3) Create Zego UIKit prebuilt instance with the returned kit token
       const zp = ZegoUIKitPrebuilt.create(kitToken);

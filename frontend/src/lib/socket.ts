@@ -1,6 +1,8 @@
 import { dbUrl } from "@/constants";
 import { io } from "socket.io-client";
 
+console.log("Connecting to socket at", dbUrl);
+
 export const socket = (() => {
   const s = io(dbUrl, { reconnectionDelayMax: 10000 });
   console.log("Socket instance created", s.id);

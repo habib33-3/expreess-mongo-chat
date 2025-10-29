@@ -46,6 +46,7 @@ const ViewerZego = () => {
           container: zegoContainerRef.current,
           scenario: { mode: ZegoUIKitPrebuilt.LiveStreaming }, // viewer role prevents publishing
           showUserList: false,
+          
         });
 
         setConnection("connected");
